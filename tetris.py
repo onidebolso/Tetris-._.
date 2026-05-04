@@ -4,9 +4,9 @@ import time
 
 COLS = 8
 ROWS = 15
-FPS = 2  # Blocks fall every ~0.5 seconds (1/FPS)
+FPS = 2 
 
-# Color indices for curses (using terminal color pairs)
+
 COLOR_BLACK = 0
 COLOR_CYAN = 1
 COLOR_BLUE = 2
@@ -16,7 +16,7 @@ COLOR_GREEN = 5
 COLOR_MAGENTA = 6
 COLOR_RED = 7
 
-# Map piece color indices to curses color pairs
+
 COLORS = [
     COLOR_CYAN,     # I
     COLOR_BLUE,     # J
@@ -37,7 +37,7 @@ SHAPES = [
     [[7, 7, 0], [0, 7, 7]]   # Z
 ]
 
-# Character to represent a block (use simple char for compatibility)
+
 BLOCK_CHAR = '#'
 EMPTY_CHAR = ' '
 
@@ -97,7 +97,6 @@ def clear_rows(grid, locked):
                 except:
                     continue
     if inc > 0:
-        # Move all lines above down
         for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
             x, y = key
             if y < i:
@@ -113,23 +112,20 @@ def get_shape():
 class TetrisGame:
     def __init__(self, stdscr):
         self.stdscr = stdscr
-        # Check terminal size
-        min_height = ROWS + 5  # grid + borders + info
-        min_width = COLS * 2 + 15  # grid + borders + info
+        min_height = ROWS + 5 
+        min_width = COLS * 2 + 15 
         if curses.LINES < min_height or curses.COLS < min_width:
             stdscr.addstr(0, 0, f"Terminal too small. Need at least {min_width}x{min_height}, got {curses.COLS}x{curses.LINES}")
             stdscr.refresh()
             stdscr.getch()
             raise SystemExit("Terminal size too small")
         
-        curses.curs_set(0)  # Hide cursor
-        stdscr.nodelay(True)  # Non-blocking input
-        stdscr.timeout(50)  # 50ms timeout for getch
+        curses.curs_set(0)  
+        stdscr.nodelay(True)  
+        stdscr.timeout(50)  
         
-        # Initialize colors
         self._init_colors()
-        
-        # Game state
+    
         self.locked_positions = {}
         self.grid = create_grid(self.locked_positions)
         self.current_piece = get_shape()
@@ -149,7 +145,6 @@ class TetrisGame:
         curses.init_pair(COLOR_GREEN, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(COLOR_MAGENTA, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         curses.init_pair(COLOR_RED, curses.COLOR_RED, curses.COLOR_BLACK)
-        # Orange is approximated with red (terminal limitation)
         curses.init_pair(COLOR_ORANGE, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
     def update(self):
@@ -159,7 +154,6 @@ class TetrisGame:
         
         self.grid = create_grid(self.locked_positions)
         
-        # Check if piece should fall
         current_time = time.time()
         if current_time - self.last_fall_time > self.fall_speed:
             self.last_fall_time = current_time
@@ -177,7 +171,6 @@ class TetrisGame:
             self.next_piece = get_shape()
             self.change_piece = False
             
-            # Clear rows and update score
             rows_cleared = clear_rows(self.grid, self.locked_positions)
             self.score += rows_cleared * 10
 
@@ -186,14 +179,12 @@ class TetrisGame:
 
     def _draw_grid(self, start_y, start_x):
         """Draw the game grid"""
-        # Draw border
         self.stdscr.addstr(start_y - 1, start_x - 1, '+' + '-' * (COLS * 2) + '+')
         for y in range(ROWS):
             self.stdscr.addstr(start_y + y, start_x - 1, '|')
             self.stdscr.addstr(start_y + y, start_x + COLS * 2, '|')
         self.stdscr.addstr(start_y + ROWS, start_x - 1, '+' + '-' * (COLS * 2) + '+')
         
-        # Draw locked positions
         for y in range(ROWS):
             for x in range(COLS):
                 color = self.grid[y][x]
@@ -217,7 +208,6 @@ class TetrisGame:
         self.stdscr.addstr(info_y, COLS * 2 + 5, f'Score: {self.score}')
         self.stdscr.addstr(info_y + 2, COLS * 2 + 5, 'Next:')
         
-        # Draw next piece
         next_y = info_y + 3
         next_x = COLS * 2 + 5
         for i, row in enumerate(self.next_piece.shape):
@@ -263,7 +253,6 @@ class TetrisGame:
         if ch == -1:
             return
         
-        # Convert character to key name
         if ch == ord('q') or ch == ord('Q'):
             self.game_over = True
         elif ch == curses.KEY_LEFT or ch == ord('a'):
@@ -297,7 +286,6 @@ class TetrisGame:
             self.draw()
             
             if self.game_over:
-                # Wait for quit input
                 try:
                     ch = self.stdscr.getch()
                     if ch == ord('q') or ch == ord('Q'):
@@ -311,7 +299,7 @@ def main(stdscr):
     try:
         game.run()
     finally:
-        curses.curs_set(1)  # Show cursor again
+        curses.curs_set(1) 
 
 
 if __name__ == '__main__':
