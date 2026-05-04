@@ -2,8 +2,10 @@ import curses
 import random
 import time
 
-COLS, ROWS = 8, 15
-FPS = 2
+# CONFIGURAÇÕES 
+
+COLS, ROWS = 8, 15    # tamanho do grid
+FPS = 2               # velocidade de queda
 
 COLOR_BLACK = 0
 COLOR_CYAN = 1
@@ -14,8 +16,11 @@ COLOR_GREEN = 5
 COLOR_MAGENTA = 6
 COLOR_RED = 7
 
+
+# lista de cores das peças
 COLORS = [COLOR_CYAN, COLOR_BLUE, COLOR_ORANGE, COLOR_YELLOW, COLOR_GREEN, COLOR_MAGENTA, COLOR_RED]
 
+# formatos das peças
 SHAPES = [
     [[1,1,1,1]],
     [[2,0,0],[2,2,2]],
@@ -28,6 +33,7 @@ SHAPES = [
 
 BLOCK = "#"
 
+# SAFE DRAW 
 def safe_addstr(scr, y, x, text, attr=0):
     h, w = scr.getmaxyx()
     if 0 <= y < h and 0 <= x < w:
@@ -35,6 +41,8 @@ def safe_addstr(scr, y, x, text, attr=0):
             scr.addstr(y, x, text, attr)
         except:
             pass
+
+# RANK 
 
 def get_name(scr):
     curses.echo()
@@ -92,7 +100,10 @@ def show_rank(scr):
     scr.erase()
     scr.refresh()
 
+# LÓGICA DO JOGO 
+
 class Piece:
+    # representa uma peça do tetris
     def __init__(self,x,y,shape,color):
         self.x=x
         self.y=y
@@ -100,25 +111,34 @@ class Piece:
         self.color=color
 
     def rotate(self):
+        # rotaciona a peça
         self.shape=[list(r) for r in zip(*self.shape[::-1])]
 
+
 def new_piece():
+    # cria nova peça aleatória
     i=random.randint(0,6)
     return Piece(3,0,[row[:] for row in SHAPES[i]],COLORS[i])
 
+
 def grid_from_locked(locked):
+    # cria grid com peças fixas
     g=[[0]*COLS for _ in range(ROWS)]
     for (x,y),c in locked.items():
         if 0<=x<COLS and 0<=y<ROWS:
             g[y][x]=c
     return g
 
+
 def positions(p):
+    # retorna posições ocupadas pela peça
     return [(p.x+j,p.y+i)
             for i,r in enumerate(p.shape)
             for j,v in enumerate(r) if v]
 
+
 def valid(p, grid):
+    # verifica colisão e limites
     for x,y in positions(p):
         if x < 0 or x >= COLS:
             return False
@@ -128,7 +148,9 @@ def valid(p, grid):
             return False
     return True
 
+
 def clear_rows(grid, locked):
+    # remove linhas
     cleared = 0
 
     for y in range(ROWS-1, -1, -1):
@@ -144,7 +166,11 @@ def clear_rows(grid, locked):
 
     return cleared
 
+
+# GAME
+
 class Game:
+    # classe principal do jogo
     def __init__(self,scr):
         self.s=scr
         curses.curs_set(0)
@@ -163,7 +189,9 @@ class Game:
         self.score=0
         self.over=False
 
+
     def draw(self):
+        # desenha jogo na tela
         self.s.erase()
 
         sy,sx=1,2
@@ -189,7 +217,9 @@ class Game:
 
         self.s.refresh()
 
+
     def update(self):
+        # atualiza lógica do jogo
         if time.time() - self.last > self.speed:
             self.last = time.time()
 
@@ -207,12 +237,15 @@ class Game:
                 self.next = new_piece()
 
                 grid = grid_from_locked(self.locked)
+
                 self.score += clear_rows(grid, self.locked) * 10
 
                 if any(y < 1 for _, y in self.locked):
                     self.over = True
 
+
     def input(self):
+        # captura input do jogador
         k=self.s.getch()
         grid = grid_from_locked(self.locked)
 
@@ -233,7 +266,9 @@ class Game:
             if not valid(self.piece,grid):
                 self.piece.shape=old
 
+
     def run(self):
+        # loop principal do jogo
         while True:
             self.input()
             self.update()
@@ -245,7 +280,11 @@ class Game:
                 show_rank(self.s)
                 return
 
+
+# MENU
+
 def menu(scr):
+    # menu inicial
     opt=0
     items=["Jogar","Ranking","Sair"]
 
@@ -268,7 +307,11 @@ def menu(scr):
 
         time.sleep(0.05)
 
+
+# MAIN
+
 def main(stdscr):
+    # controla fluxo do jogo
     while True:
         c=menu(stdscr)
         if c==0:
